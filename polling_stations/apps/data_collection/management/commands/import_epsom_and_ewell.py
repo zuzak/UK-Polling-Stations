@@ -5,7 +5,9 @@ class Command(BaseMorphApiImporter):
     srid = 27700
     districts_srid  = 27700
     council_id = 'E07000208'
-    elections = ['local.surrey.2017-05-04']
+    elections = [
+        # 'local.surrey.2017-05-04'
+    ]
     scraper_name = 'wdiv-scrapers/DC-PollingStations-EpsomAndEwell'
     geom_type = 'gml'
 
