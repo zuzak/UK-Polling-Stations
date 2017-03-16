@@ -107,13 +107,15 @@ class Command(BaseCommand):
             if not council.area:
                 council.area = self.get_wkt_from_mapit(mapit_id)
                 self._save_council(council)
-                time.sleep(1)
+                if not self.headers:
+                    time.sleep(1)
             if not council.location:
                 print(council.postcode)
                 try:
                     l = geocode(council.postcode)
                 except:
                     continue
-                time.sleep(1)
+                if not self.headers:
+                    time.sleep(1)
                 council.location = Point(l['wgs84_lon'], l['wgs84_lat'])
                 self._save_council(council)
