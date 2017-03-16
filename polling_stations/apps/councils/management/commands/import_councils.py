@@ -21,6 +21,10 @@ class Command(BaseCommand):
     """
     requires_system_checks = False
 
+    headers = {}
+    if settings.MAPIT_UA:
+        headers['User-Agent'] = settings.MAPIT_UA
+
     def handle(self, **options):
         """
         Manually run system checks for the
@@ -41,7 +45,9 @@ class Command(BaseCommand):
             council.save(using=db)
 
     def get_wkt_from_mapit(self, area_id):
-        req = requests.get('%sarea/%s.wkt' % (settings.MAPIT_URL, area_id))
+        req = requests.get(
+            '%sarea/%s.wkt' % (settings.MAPIT_URL, area_id),
+            headers=self.headers)
         area = req.text
         if area.startswith('POLYGON'):
             area = area[7:]
@@ -53,7 +59,9 @@ class Command(BaseCommand):
         if council_id.startswith('N'):
             # GOV.UK returns a 500 for any id in Northen Ireland
             return {}
-        req = requests.get("%s%s" % (settings.GOV_UK_LA_URL, council_id))
+        req = requests.get(
+            "%s%s" % (settings.GOV_UK_LA_URL, council_id),
+            headers=self.headers)
         soup = BeautifulSoup(req.text, "lxml")
         info = {}
         article = soup.findAll('article')[0]
@@ -70,7 +78,9 @@ class Command(BaseCommand):
         return info
 
     def get_type_from_mapit(self, council_type):
-        req = requests.get('%sareas/%s' % (settings.MAPIT_URL, council_type))
+        req = requests.get(
+            '%sareas/%s' % (settings.MAPIT_URL, council_type),
+            headers=self.headers)
         for mapit_id, council in list(req.json().items()):
             council_id = council['codes'].get('gss')
             if not council_id:
