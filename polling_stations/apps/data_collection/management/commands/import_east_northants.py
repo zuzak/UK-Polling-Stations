@@ -5,7 +5,9 @@ class Command(BaseMorphApiImporter):
     srid = 27700
     districts_srid = 27700
     council_id = 'E07000152'
-    elections = ['local.northamptonshire.2017-05-04']
+    elections = [
+        # 'local.northamptonshire.2017-05-04'
+    ]
     scraper_name = 'wdiv-scrapers/DC-PollingStations-EastNorthamptonshire'
     geom_type = 'gml'
     lookup_table = {}
@@ -48,7 +50,7 @@ class Command(BaseMorphApiImporter):
     def district_record_to_dict(self, record):
         self.add_to_lookup(record)
         record = self.replace_schema(record)
-        
+
         poly = self.extract_geometry(record, self.geom_type, self.get_srid('districts'))
         return {
             'internal_council_id': record['OBJECTID_1'],
