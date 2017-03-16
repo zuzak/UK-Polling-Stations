@@ -95,6 +95,8 @@ class Command(BaseCommand):
             base_path + '/import_*.py'
         )
         # loop over all the import scripts
+        if not files:
+            raise ValueError("No importers matched")
         for f in files:
             head, tail = os.path.split(f)
             try:
@@ -124,7 +126,5 @@ class Command(BaseCommand):
                         cmd.handle(**opts)
             else:
                 self.summary.append(('WARNING', "%s does not contain elections property!" % tail))
-        else:
-            raise ValueError("No importers matched")
 
         self.output_summary()
