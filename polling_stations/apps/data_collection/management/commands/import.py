@@ -95,6 +95,8 @@ class Command(BaseCommand):
             base_path + '/import_*.py'
         )
         # loop over all the import scripts
+        if not files:
+            raise ValueError("No importers matched")
         for f in files:
             head, tail = os.path.split(f)
             try:
