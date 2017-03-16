@@ -124,5 +124,7 @@ class Command(BaseCommand):
                         cmd.handle(**opts)
             else:
                 self.summary.append(('WARNING', "%s does not contain elections property!" % tail))
+        else:
+            raise ValueError("No importers matched")
 
         self.output_summary()
