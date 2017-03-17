@@ -59,6 +59,15 @@ class Command(BaseCommand):
             default=False
         )
 
+        parser.add_argument(
+            '-m',
+            '--multiprocessing',
+            help='<Optional> Use multiprocessing for import',
+            action='store_true',
+            required=False,
+            default=False
+        )
+
     def importer_covers_these_elections(self, args_elections, importer_elections, regex):
         for election in args_elections:
             if regex:
@@ -97,6 +106,7 @@ class Command(BaseCommand):
         # loop over all the import scripts
         if not files:
             raise ValueError("No importers matched")
+        commands_to_run = []
         for f in files:
             head, tail = os.path.split(f)
             try:
@@ -113,18 +123,67 @@ class Command(BaseCommand):
                 if self.importer_covers_these_elections(kwargs['elections'], cmd.elections, kwargs['regex']):
                     # run the import script
 
-                    # Only run if
-                    existing_data = PollingStation.objects.filter(
-                        council_id=cmd.council_id).exists()
-                    if not existing_data or kwargs.get('overwrite'):
-                        self.summary.append(
-                            ('INFO', "Ran import script %s" % tail))
-                        opts = {
-                            'noclean': False,
-                            'verbosity': 1
-                        }
+                    # # Only run if
+                    # existing_data = PollingStation.objects.filter(
+                    #     council_id=cmd.council_id).exists()
+                    # if not existing_data or kwargs.get('overwrite'):
+                    #     self.summary.append(
+                    #         ('INFO', "Ran import script %s" % tail))
+                    opts = {
+                        'noclean': False,
+                        'verbosity': 0
+                    }
+                    commands_to_run.append(f)
+                    if not kwargs['multiprocessing']:
                         cmd.handle(**opts)
             else:
                 self.summary.append(('WARNING', "%s does not contain elections property!" % tail))
 
         self.output_summary()
+
+        opts = {
+            'noclean': False,
+            'verbosity': 1
+        }
+
+        if kwargs['multiprocessing']:
+            from multiprocessing import Pool
+            pool = Pool()
+            pool.map(run_cmd, commands_to_run)
+            pool.close()
+            pool.join()
+
+def run_cmd(f):
+    command = SourceFileLoader("module.name", f).load_module()
+    cmd = command.Command()
+    opts = {
+        'noclean': False,
+        'verbosity': 0
+    }
+
+    cmd.handle(**opts)
+
+
+# Normal
+# 109.91s user
+# 3.92s system
+# 48% cpu
+# 3:52.99 total
+
+# Multicore
+# 151.42s user
+# 3.88s system
+# 140% cpu
+# 1:50.41 total
+
+# Multicore no download or report
+# 146.68s user
+# 3.95s system
+# 143% cpu
+# 1:45.01 total
+
+# Single process, no download, no-report
+# 117.13s user
+# 3.81s system
+# 62% cpu
+# 3:13.63 total
