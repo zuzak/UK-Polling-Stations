@@ -60,15 +60,6 @@ class Command(BaseCommand):
         req = requests.get(
             "%s%s" % (settings.YVM_LA_URL, council_id))
         content = req.text
-        if council_id == "E08000017":
-            # Text not escaped properly
-            content = content.replace(
-                '"https://www.yourvotematters.co.uk/elections-in-2017/local-elections-in-england"',
-                '\'https://www.yourvotematters.co.uk/elections-in-2017/local-elections-in-england\'')
-
-        if council_id == "S12000034":
-            # JSON content duplicated(!!)
-            content = content.split("}{")[0] + "}"
 
         council_data = json.loads(str(content))['registrationOffice']
         info = {}
