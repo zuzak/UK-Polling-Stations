@@ -25,7 +25,6 @@ class S3Wrapper:
         return os.path.abspath(self.base_path)
 
     def fetch_data(self, council_id):
-        return
         prefix = "%s-" % (council_id)
         local_pattern = os.path.abspath("%s/%s*" % (self.base_path, prefix))
         local_paths = glob.glob(local_pattern)
