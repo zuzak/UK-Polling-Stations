@@ -176,12 +176,13 @@ class DirectionsHelper():
 
         return self.Directions(walk_time, walk_dist, ps)
 
-    def get_google_route(self, postcode, end):
-        url = "{base_url}{postcode}&destination={destination}".format(
-                base_url=settings.BASE_GOOGLE_URL,
-                postcode=postcode,
-                destination="{0},{1}".format(end.y, end.x),
-            )
+    def get_google_route(self, start, end):
+        url = "{base_url}{start_y},{start_x}&destination={destination}".format(
+            base_url=settings.BASE_GOOGLE_URL,
+            start_y=start.y,
+            start_x=start.x,
+            destination="{0},{1}".format(end.y, end.x),
+        )
 
         resp = requests.get(url)
         if resp.status_code != 200:
