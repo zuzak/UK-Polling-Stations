@@ -15,8 +15,10 @@ from addressbase.models import Address
 
 from pollingstations.models import ResidentialAddress
 
+
 class PostcodeError(Exception):
     pass
+
 
 class RateLimitError(Exception):
     def __init__(self, message):
@@ -41,6 +43,7 @@ def geocode_point_only(postcode, sleep=True):
         'wgs84_lat': centre.y,
     }
 
+
 def geocode(postcode):
     """
     Use MaPit to convert the postcode to a location and constituency
@@ -52,7 +55,9 @@ def geocode(postcode):
     if settings.MAPIT_UA:
         headers['User-Agent'] = settings.MAPIT_UA
 
-    res = requests.get("%s/postcode/%s" % (settings.MAPIT_URL, postcode), headers=headers)
+    res = requests.get("{}/postcode/{}".format(
+        settings.MAPIT_URL, postcode
+        ), headers=headers)
 
     if res.status_code != 200:
         if res.status_code == 403:
@@ -68,12 +73,15 @@ def geocode(postcode):
             # attempt to parse error from json
             res_json = res.json()
             if 'error' in res_json:
-                raise PostcodeError("Mapit error {}: {}".format(res_json['code'], res_json['error']))
+                raise PostcodeError("Mapit error {}: {}".format(
+                    res_json['code'], res_json['error']))
             else:
-                raise PostcodeError("Mapit error {}: unknown".format(res.status_code))
+                raise PostcodeError("Mapit error {}: unknown".format(
+                    res.status_code))
         except ValueError:
             # if we fail to parse json, raise a less specific exception
-            raise PostcodeError("Mapit error {}: unknown".format(res.status_code))
+            raise PostcodeError("Mapit error {}: unknown".format(
+                res.status_code))
 
     res_json = res.json()
 
@@ -107,15 +115,19 @@ class AddressSorter:
     def alphanum_key(self, tup):
         # split the desired component of tup (defined by key function)
         # into a listof numeric and text components
-        return [ self.convert(c) for c in filter(None, re.split('([0-9]+)', self.key(tup))) ]
+        return [self.convert(c)
+                for c in filter(None, re.split('([0-9]+)', self.key(tup)))]
 
     def swap_fields(self, item):
         lst = self.alphanum_key(item)
         # swap things about so we can sort by street name, house number
         # instead of house number, street name
-        if len(lst) > 1 and isinstance(lst[0], int) and isinstance(lst[1], str) and (lst[1][0].isspace() or lst[1][0] == ','):
+        if len(lst) > 1 and isinstance(lst[0], int) and \
+            isinstance(lst[1], str) and (lst[1][0].isspace()
+                                         or lst[1][0] == ','):
             lst[0], lst[1] = lst[1], lst[0]
-        if len(lst) > 1 and isinstance(lst[0], int) and isinstance(lst[1], int):
+        if len(lst) > 1 and isinstance(
+                lst[0], int) and isinstance(lst[1], int):
             lst[0], lst[1] = lst[1], lst[0]
         if isinstance(lst[0], int):
             lst[0] = str(lst[0])
@@ -123,7 +135,7 @@ class AddressSorter:
 
     def natural_sort(self, lst, key):
         self.key = key
-        return sorted(lst, key = self.swap_fields)
+        return sorted(lst, key=self.swap_fields)
 
 
 class OrsDirectionsApiError(Exception):
@@ -138,14 +150,18 @@ class DirectionsHelper():
 
     def __init__(self):
         self.re_time = re.compile("PT([0-9]+)M([0-9]+)S")
-        self.Directions = namedtuple('Directions', ['walk_time', 'walk_dist', 'route'])
+        self.Directions = namedtuple(
+            'Directions', ['walk_time', 'walk_dist', 'route'])
 
     def get_ors_route(self, longlat_from, longlat_to):
-        url = settings.ORS_ROUTE_URL_TEMPLATE.format(longlat_from.x, longlat_from.y, longlat_to.x, longlat_to.y)
+        url = settings.ORS_ROUTE_URL_TEMPLATE.format(
+            longlat_from.x, longlat_from.y, longlat_to.x, longlat_to.y)
 
         resp = requests.get(url)
         if resp.status_code != 200:
-            raise OrsDirectionsApiError("Open Route Service API error: HTTP status code %i" % resp.status_code)
+            raise OrsDirectionsApiError(
+                "Open Route Service API error: HTTP status code {}".format(
+                    resp.status_code))
 
         root = lxml.etree.fromstring(resp.content)
 
@@ -157,15 +173,19 @@ class DirectionsHelper():
 
         ps = [
             [float(x) for x in pos.text.split()]
-            for pos in root.xpath('//xls:RouteGeometry/gml:LineString/gml:pos', namespaces=ns)
+            for pos in root.xpath(
+                '//xls:RouteGeometry/gml:LineString/gml:pos', namespaces=ns)
         ]
 
         walk_dist = "{} {}".format(
-            root.xpath('//xls:RouteSummary/xls:TotalDistance/@value', namespaces=ns)[0],
+            root.xpath(
+                '//xls:RouteSummary/xls:TotalDistance/@value',
+                namespaces=ns)[0],
             _('miles'),
         )
 
-        time_text = root.xpath('//xls:RouteSummary/xls:TotalTime/text()', namespaces=ns)[0]
+        time_text = root.xpath(
+            '//xls:RouteSummary/xls:TotalTime/text()', namespaces=ns)[0]
         matches = self.re_time.match(
             time_text,
         )
@@ -186,11 +206,15 @@ class DirectionsHelper():
 
         resp = requests.get(url)
         if resp.status_code != 200:
-            raise GoogleDirectionsApiError("Google Directions API error: HTTP status code %i" % resp.status_code)
+            raise GoogleDirectionsApiError(
+                "Google Directions API error: HTTP status code {}".foramt(
+                    resp.status_code
+                ))
         directions = resp.json()
 
         if directions['status'] != 'OK':
-            raise GoogleDirectionsApiError("Google Directions API error: {}".format(directions['status']))
+            raise GoogleDirectionsApiError(
+                "Google Directions API error: {}".format(directions['status']))
 
         start_points = [
             Point(x['start_location']['lng'], x['start_location']['lat'])
@@ -210,19 +234,26 @@ class DirectionsHelper():
             directions['routes'][0]['legs'][0]['distance']['text']
         ).replace('mi', _('miles'))
 
-        return self.Directions(walk_time, walk_dist, start_points[:] + end_points[-1:])
+        return self.Directions(
+            walk_time, walk_dist, start_points[:] + end_points[-1:])
 
     def get_directions(self, **kwargs):
         try:
-            directions = self.get_google_route(kwargs['start_postcode'], kwargs['end_location'])
-        except GoogleDirectionsApiError as e1:
+            directions = self.get_google_route(
+                kwargs['start_location'],
+                kwargs['end_location']
+            )
+        except GoogleDirectionsApiError:
             return None
             # Should log error here
 
             if kwargs['start_location']:
                 try:
-                    directions = self.get_ors_route(kwargs['start_location'], kwargs['end_location'])
-                except OrsDirectionsApiError as e2:
+                    directions = self.get_ors_route(
+                        kwargs['start_location'],
+                        kwargs['end_location']
+                    )
+                except OrsDirectionsApiError:
                     # Should log error here
 
                     directions = None
@@ -243,7 +274,7 @@ class RoutingHelper():
     def get_addresses(self):
         self.addresses = ResidentialAddress.objects.filter(
             postcode=self.postcode
-        )#.distinct()
+        )  # .distinct()
         return self.addresses
 
     @property
@@ -279,7 +310,6 @@ class RoutingHelper():
         else:
             # postcode is not in ResidentialAddress table
             return "postcode"
-
 
     def get_endpoint(self):
         if self.route_type == "single_address":
