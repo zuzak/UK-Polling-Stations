@@ -8,7 +8,7 @@ from collections import namedtuple
 
 from django.conf import settings
 from django.forms import ValidationError
-from fuzzywuzzy import fuzz
+from rapidfuzz import fuzz
 from localflavor.gb.forms import GBPostcodeField
 
 from addressbase.models import Blacklist, get_uprn_hash_table
