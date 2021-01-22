@@ -14,8 +14,8 @@ jobs:
           PGHOST: 127.0.0.1
       - image: circleci/postgres:10.5-postgis-ram
         environment:
-          POSTGRES_USER: polling_stations
-          POSTGRES_DB: polling_stations
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test
 
     working_directory: ~/repo
 
