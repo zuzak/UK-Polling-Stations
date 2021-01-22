@@ -15,7 +15,7 @@ jobs:
       - image: circleci/postgres:10.5-postgis-ram
         environment:
           POSTGRES_USER: postgres
-          POSTGRES_DB: test
+          POSTGRES_DB: polling_stations
 
     working_directory: ~/repo
 
